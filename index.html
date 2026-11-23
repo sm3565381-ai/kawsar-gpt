@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KAWSAR GPT</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0b0f16;color:#e8eef8;font:15px system-ui, sans-serif}
+.app{max-width:900px;margin:auto;height:100dvh;display:flex;flex-direction:column;background:linear-gradient(145deg,#101725,#0b0f16)}
+header{padding:16px;border-bottom:1px solid #263244;display:flex;gap:10px;align-items:center}
+.logo{background:#13c9a3;color:#07120f;font-weight:900;border-radius:12px;padding:10px}
+header h1{font-size:18px;margin:0}header small{color:#9aa9bd}
+#messages{padding:16px;overflow:auto;flex:1;display:flex;flex-direction:column;gap:12px}
+.msg{max-width:88%;white-space:pre-wrap;line-height:1.55;padding:12px 14px;border-radius:16px}
+.user{align-self:flex-end;background:#164d49;border:1px solid #197f72}
+.ai{align-self:flex-start;background:#151e2b;border:1px solid #29384b}
+.welcome{color:#a9b7c9;text-align:center;margin:auto;max-width:500px}
+form{padding:12px;border-top:1px solid #263244;display:flex;gap:8px;background:#0e1420}
+textarea{resize:none;max-height:140px;min-height:48px;flex:1;background:#141d2a;color:#fff;border:1px solid #34445a;border-radius:14px;padding:12px;font:inherit}
+button{border:0;border-radius:12px;background:#13c9a3;color:#06130f;font-weight:800;padding:0 18px;cursor:pointer}
+button:disabled{opacity:.5}.status{padding:0 14px 10px;color:#8798ac;font-size:12px}
+</style>
+</head>
+<body><main class="app">
+<header><div class="logo">KG</div><div><h1>KAWSAR GPT</h1><small>Gemini API connected via server</small></div></header>
+<section id="messages"><div class="welcome">কথা শুরু করো—বাংলা বা ইংরেজি যেকোনো ভাষায় প্রশ্ন করতে পারো।</div></section>
+<div class="status" id="status">Ready</div>
+<form id="form"><textarea id="input" placeholder="মেসেজ লিখো..." rows="1"></textarea><button id="send">Send</button></form>
+</main>
+<script>
+const messagesEl=document.getElementById('messages'),form=document.getElementById('form'),input=document.getElementById('input'),statusEl=document.getElementById('status'),send=document.getElementById('send');
+let history=[];
+function add(role,text){let d=document.createElement('div');d.className='msg '+(role==='user'?'user':'ai');d.textContent=text;messagesEl.querySelector('.welcome')?.remove();messagesEl.appendChild(d);messagesEl.scrollTop=messagesEl.scrollHeight;return d}
+form.addEventListener('submit',async e=>{e.preventDefault();let text=input.value.trim();if(!text||send.disabled)return;input.value='';add('user',text);history.push({role:'user',content:text});send.disabled=true;statusEl.textContent='AI উত্তর তৈরি করছে…';let bubble=add('assistant','');
+try{let r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:history})});let data=await r.json();if(!r.ok)throw Error(data.error||'Request failed');bubble.textContent=data.reply||'(No response)';history.push({role:'assistant',content:bubble.textContent})}
+catch(err){bubble.textContent='Error: '+err.message;history.pop()}
+finally{send.disabled=false;statusEl.textContent='Ready';input.focus()}
+});
+input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();form.requestSubmit()}});
+</script></body></html>
